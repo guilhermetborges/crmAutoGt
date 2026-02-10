@@ -1,0 +1,428 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================
+// TENANT
+// =============================================
+model Company {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @db.VarChar(255)
+  domain    String?  @db.VarChar(100)
+  timezone  String   @default("America/Sao_Paulo") @db.VarChar(50)
+  logoUrl   String?  @map("logo_url")
+  settings  Json     @default("{}")
+  status    String   @default("active") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  users             User[]
+  sectors           Sector[]
+  channels          WhatsAppChannel[]
+  contacts          Contact[]
+  conversations     Conversation[]
+  tags              Tag[]
+  quickReplies      QuickReply[]
+  auditLogs         AuditLog[]
+  integrationLogs   IntegrationLog[]
+  slaEvents         SLAEvent[]
+  templates         WhatsAppTemplate[]
+  messages          Message[]
+  conversationTags  ConversationTag[]
+  mediaAttachments  MediaAttachment[]
+  conversationTransfers ConversationTransfer[]
+
+  @@unique([domain], map: "idx_companies_domain")
+  @@map("companies")
+}
+
+// =============================================
+// USERS & ROLES
+// =============================================
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  companyId    String    @map("company_id") @db.Uuid
+  name         String    @db.VarChar(255)
+  email        String    @db.VarChar(255)
+  passwordHash String    @map("password_hash")
+  role         String    @db.VarChar(20) // admin, supervisor, atendente
+  avatarUrl    String?   @map("avatar_url")
+  active       Boolean   @default(true)
+  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  company              Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userSectors          UserSector[]
+  assignedConversations Conversation[]        @relation("Assignee")
+  lockedConversations  Conversation[]         @relation("LockedBy")
+  auditLogs            AuditLog[]
+  quickReplies         QuickReply[]           @relation("CreatedByUser")
+  sentMessages         Message[]              @relation("SenderUser")
+  transfersFrom        ConversationTransfer[] @relation("TransferFrom")
+  transfersTo          ConversationTransfer[] @relation("TransferTo")
+
+  @@unique([companyId, email], map: "idx_users_email_company")
+  @@index([companyId, role], map: "idx_users_company_role")
+  @@map("users")
+}
+
+model Sector {
+  id          String  @id @default(uuid()) @db.Uuid
+  companyId   String  @map("company_id") @db.Uuid
+  name        String  @db.VarChar(255)
+  description String?
+  color       String  @default("#1f93ff") @db.VarChar(7)
+  active      Boolean @default(true)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  company       Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userSectors   UserSector[]
+  conversations Conversation[]
+  transfersFrom ConversationTransfer[] @relation("TransferFromSector")
+  transfersTo   ConversationTransfer[] @relation("TransferToSector")
+
+  @@unique([companyId, name], map: "idx_sectors_name_company")
+  @@map("sectors")
+}
+
+model UserSector {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  sectorId  String   @map("sector_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sector Sector @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sectorId], map: "idx_user_sectors_uniq")
+  @@index([sectorId], map: "idx_user_sectors_sector")
+  @@map("user_sectors")
+}
+
+// =============================================
+// WHATSAPP CHANNELS
+// =============================================
+model WhatsAppChannel {
+  id                   String  @id @default(uuid()) @db.Uuid
+  companyId            String  @map("company_id") @db.Uuid
+  phoneNumber          String  @map("phone_number") @db.VarChar(20)
+  phoneNumberId        String  @map("phone_number_id") @db.VarChar(50)
+  wabaId               String  @map("waba_id") @db.VarChar(50)
+  businessName         String? @map("business_name") @db.VarChar(255)
+  encryptedAccessToken String  @map("encrypted_access_token")
+  verifyToken          String  @map("verify_token") @db.VarChar(100)
+  webhookSecret        String? @map("webhook_secret") @db.VarChar(255)
+  active               Boolean @default(true)
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  company       Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+  templates     WhatsAppTemplate[]
+  integrationLogs IntegrationLog[]
+
+  @@unique([phoneNumber], map: "idx_wa_channels_phone")
+  @@unique([phoneNumberId], map: "idx_wa_channels_phone_number_id")
+  @@index([companyId], map: "idx_wa_channels_company")
+  @@map("whatsapp_channels")
+}
+
+// =============================================
+// CONTACTS
+// =============================================
+model Contact {
+  id                String    @id @default(uuid()) @db.Uuid
+  companyId         String    @map("company_id") @db.Uuid
+  waId              String    @map("wa_id") @db.VarChar(50)
+  phoneNumber       String    @map("phone_number") @db.VarChar(20)
+  name              String    @default("") @db.VarChar(255)
+  profilePictureUrl String?   @map("profile_picture_url")
+  optIn             Boolean   @default(false) @map("opt_in")
+  optInAt           DateTime? @map("opt_in_at") @db.Timestamptz
+  customAttributes  Json      @default("{}") @map("custom_attributes")
+  lastActivityAt    DateTime? @map("last_activity_at") @db.Timestamptz
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  company       Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+
+  @@unique([companyId, waId], map: "idx_contacts_wa_id_company")
+  @@index([companyId, phoneNumber], map: "idx_contacts_phone")
+  @@map("contacts")
+}
+
+// =============================================
+// CONVERSATIONS
+// =============================================
+model Conversation {
+  id                  String    @id @default(uuid()) @db.Uuid
+  companyId           String    @map("company_id") @db.Uuid
+  channelId           String    @map("channel_id") @db.Uuid
+  contactId           String    @map("contact_id") @db.Uuid
+  sectorId            String?   @map("sector_id") @db.Uuid
+  assigneeId          String?   @map("assignee_id") @db.Uuid
+  displayId           Int       @map("display_id")
+  status              String    @default("open") @db.VarChar(20)
+  lockedByUserId      String?   @map("locked_by_user_id") @db.Uuid
+  lockedAt            DateTime? @map("locked_at") @db.Timestamptz
+  lastMessageAt       DateTime? @map("last_message_at") @db.Timestamptz
+  firstReplyAt        DateTime? @map("first_reply_at") @db.Timestamptz
+  resolvedAt          DateTime? @map("resolved_at") @db.Timestamptz
+  lastActivityAt      DateTime  @default(now()) @map("last_activity_at") @db.Timestamptz
+  customerLastSeenAt  DateTime? @map("customer_last_seen_at") @db.Timestamptz
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  company    Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  channel    WhatsAppChannel  @relation(fields: [channelId], references: [id])
+  contact    Contact          @relation(fields: [contactId], references: [id])
+  sector     Sector?          @relation(fields: [sectorId], references: [id])
+  assignee   User?            @relation("Assignee", fields: [assigneeId], references: [id])
+  lockedBy   User?            @relation("LockedBy", fields: [lockedByUserId], references: [id])
+  messages   Message[]
+  transfers  ConversationTransfer[]
+  tags       ConversationTag[]
+  slaEvents  SLAEvent[]
+
+  @@unique([companyId, displayId], map: "idx_conv_display_company")
+  @@index([companyId, status], map: "idx_conv_company_status")
+  @@index([companyId, sectorId, status], map: "idx_conv_sector_status")
+  @@index([assigneeId, status], map: "idx_conv_assignee")
+  @@index([contactId], map: "idx_conv_contact")
+  @@index([companyId, lastActivityAt(sort: Desc)], map: "idx_conv_last_activity")
+  @@index([channelId], map: "idx_conv_channel")
+  @@map("conversations")
+}
+
+// =============================================
+// MESSAGES
+// =============================================
+model Message {
+  id                String   @id @default(uuid()) @db.Uuid
+  conversationId    String   @map("conversation_id") @db.Uuid
+  companyId         String   @map("company_id") @db.Uuid
+  senderId          String?  @map("sender_id") @db.Uuid
+  senderType        String   @map("sender_type") @db.VarChar(20)  // contact, user, system
+  direction         String   @db.VarChar(10)                      // inbound, outbound
+  contentType       String   @default("text") @map("content_type") @db.VarChar(20)
+  content           String?
+  contentAttributes Json     @default("{}") @map("content_attributes")
+  waMessageId       String?  @map("wa_message_id") @db.VarChar(100)
+  status            String   @default("queued") @db.VarChar(20)
+  isInternal        Boolean  @default(false) @map("is_internal")
+  errorData         Json?    @map("error_data")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  conversation Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  company      Company           @relation(fields: [companyId], references: [id])
+  sender       User?             @relation("SenderUser", fields: [senderId], references: [id])
+  attachments  MediaAttachment[]
+
+  @@unique([waMessageId, companyId], map: "idx_msg_wa_id_channel")
+  @@index([conversationId, createdAt], map: "idx_msg_conversation_created")
+  @@index([companyId, createdAt], map: "idx_msg_company_created")
+  @@map("messages")
+}
+
+// =============================================
+// MEDIA ATTACHMENTS
+// =============================================
+model MediaAttachment {
+  id            String   @id @default(uuid()) @db.Uuid
+  messageId     String   @map("message_id") @db.Uuid
+  companyId     String   @map("company_id") @db.Uuid
+  fileType      String   @map("file_type") @db.VarChar(20)
+  fileUrl       String   @map("file_url")
+  fileName      String?  @map("file_name") @db.VarChar(255)
+  fileSizeBytes Int?     @map("file_size_bytes")
+  mimeType      String?  @map("mime_type") @db.VarChar(100)
+  s3Key         String   @map("s3_key")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@index([messageId], map: "idx_attach_message")
+  @@map("media_attachments")
+}
+
+// =============================================
+// CONVERSATION TRANSFERS
+// =============================================
+model ConversationTransfer {
+  id             String   @id @default(uuid()) @db.Uuid
+  conversationId String   @map("conversation_id") @db.Uuid
+  companyId      String   @map("company_id") @db.Uuid
+  fromUserId     String?  @map("from_user_id") @db.Uuid
+  toUserId       String?  @map("to_user_id") @db.Uuid
+  fromSectorId   String?  @map("from_sector_id") @db.Uuid
+  toSectorId     String?  @map("to_sector_id") @db.Uuid
+  reason         String
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  company      Company      @relation(fields: [companyId], references: [id])
+  fromUser     User?        @relation("TransferFrom", fields: [fromUserId], references: [id])
+  toUser       User?        @relation("TransferTo", fields: [toUserId], references: [id])
+  fromSector   Sector?      @relation("TransferFromSector", fields: [fromSectorId], references: [id])
+  toSector     Sector?      @relation("TransferToSector", fields: [toSectorId], references: [id])
+
+  @@index([conversationId], map: "idx_transfer_conv")
+  @@index([companyId, createdAt], map: "idx_transfer_company")
+  @@map("conversation_transfers")
+}
+
+// =============================================
+// TAGS
+// =============================================
+model Tag {
+  id        String   @id @default(uuid()) @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  name      String   @db.VarChar(100)
+  color     String   @default("#6366f1") @db.VarChar(7)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  company          Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  conversationTags ConversationTag[]
+
+  @@unique([companyId, name], map: "idx_tags_name_company")
+  @@map("tags")
+}
+
+model ConversationTag {
+  id             String   @id @default(uuid()) @db.Uuid
+  conversationId String   @map("conversation_id") @db.Uuid
+  tagId          String   @map("tag_id") @db.Uuid
+  companyId      String   @map("company_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  tag          Tag          @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  company      Company      @relation(fields: [companyId], references: [id])
+
+  @@unique([conversationId, tagId], map: "idx_conv_tags_uniq")
+  @@map("conversation_tags")
+}
+
+// =============================================
+// QUICK REPLIES
+// =============================================
+model QuickReply {
+  id          String   @id @default(uuid()) @db.Uuid
+  companyId   String   @map("company_id") @db.Uuid
+  shortcode   String   @db.VarChar(50)
+  content     String
+  createdById String?  @map("created_by_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdBy User?   @relation("CreatedByUser", fields: [createdById], references: [id])
+
+  @@unique([companyId, shortcode], map: "idx_qr_shortcode_company")
+  @@map("quick_replies")
+}
+
+// =============================================
+// WHATSAPP TEMPLATES
+// =============================================
+model WhatsAppTemplate {
+  id            String    @id @default(uuid()) @db.Uuid
+  companyId     String    @map("company_id") @db.Uuid
+  channelId     String    @map("channel_id") @db.Uuid
+  waTemplateId  String?   @map("wa_template_id") @db.VarChar(100)
+  name          String    @db.VarChar(255)
+  language      String    @default("pt_BR") @db.VarChar(10)
+  category      String?   @db.VarChar(50)
+  status        String    @default("approved") @db.VarChar(20)
+  components    Json      @default("[]")
+  syncedAt      DateTime? @map("synced_at") @db.Timestamptz
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  company Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  channel WhatsAppChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@index([channelId], map: "idx_templates_channel")
+  @@index([companyId, status], map: "idx_templates_company_status")
+  @@map("whatsapp_templates")
+}
+
+// =============================================
+// AUDIT LOGS
+// =============================================
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  companyId  String   @map("company_id") @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
+  action     String   @db.VarChar(50)
+  entityType String   @map("entity_type") @db.VarChar(50)
+  entityId   String?  @map("entity_id") @db.Uuid
+  changes    Json     @default("{}")
+  ipAddress  String?  @map("ip_address") @db.VarChar(45)
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  company Company @relation(fields: [companyId], references: [id])
+  user    User?   @relation(fields: [userId], references: [id])
+
+  @@index([companyId, createdAt(sort: Desc)], map: "idx_audit_company_created")
+  @@index([entityType, entityId], map: "idx_audit_entity")
+  @@index([userId], map: "idx_audit_user")
+  @@map("audit_logs")
+}
+
+// =============================================
+// INTEGRATION LOGS
+// =============================================
+model IntegrationLog {
+  id              String   @id @default(uuid()) @db.Uuid
+  companyId       String   @map("company_id") @db.Uuid
+  channelId       String?  @map("channel_id") @db.Uuid
+  direction       String   @db.VarChar(10) // inbound, outbound
+  endpoint        String?
+  statusCode      Int?     @map("status_code")
+  payloadSummary  Json     @default("{}") @map("payload_summary")
+  responseSummary Json     @default("{}") @map("response_summary")
+  latencyMs       Int?     @map("latency_ms")
+  error           String?
+  retryCount      Int      @default(0) @map("retry_count")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  company Company          @relation(fields: [companyId], references: [id])
+  channel WhatsAppChannel? @relation(fields: [channelId], references: [id])
+
+  @@index([companyId, createdAt(sort: Desc)], map: "idx_intlog_company_created")
+  @@index([channelId, createdAt(sort: Desc)], map: "idx_intlog_channel")
+  @@map("integration_logs")
+}
+
+// =============================================
+// SLA EVENTS
+// =============================================
+model SLAEvent {
+  id               String   @id @default(uuid()) @db.Uuid
+  companyId        String   @map("company_id") @db.Uuid
+  conversationId   String   @map("conversation_id") @db.Uuid
+  eventType        String   @map("event_type") @db.VarChar(30)
+  thresholdSeconds Int?     @map("threshold_seconds")
+  actualSeconds    Int?     @map("actual_seconds")
+  meta             Json     @default("{}")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  company      Company      @relation(fields: [companyId], references: [id])
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+
+  @@index([companyId, createdAt(sort: Desc)], map: "idx_sla_company_created")
+  @@index([conversationId], map: "idx_sla_conversation")
+  @@map("sla_events")
+}

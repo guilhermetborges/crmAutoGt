@@ -1,0 +1,59 @@
+node_modules
+# Keep environment variables out of version control
+.env
+.env.example
+
+/generated/prisma
+
+# Dependências
+node_modules/
+jspm_packages/
+
+# Arquivos de ambiente e segredos (MUITO IMPORTANTE)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.secret
+*.pem
+
+# Compilação TypeScript / Build Output
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Cobertura de testes
+coverage/
+.nyc_output/
+
+# IDEs e Editores
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Sistema Operacional
+.DS_Store
+Thumbs.db
+
+# Cache
+.eslintcache
+.cache/
+.parcel-cache/

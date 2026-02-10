@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Implementation plan for the WhatsCRM frontend using Next.js 14 (App Router). Covers all pages: Login, Inbox with real-time chat, Admin panels (Users, Sectors, Channels, Tags), Reports Dashboard. Includes design system, auth flow, WebSocket integration, and verification plan.",
+  "updatedAt": "2026-02-10T02:08:17.941941869Z"
+}

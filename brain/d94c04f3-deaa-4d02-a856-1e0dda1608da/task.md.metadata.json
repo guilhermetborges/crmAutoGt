@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_TASK",
+  "summary": "Task breakdown for implementing the WhatsCRM frontend using Next.js. Covers project setup, design system, auth pages, main layout, inbox/conversations, message timeline, admin panels, reports dashboard, and WebSocket integration.",
+  "updatedAt": "2026-02-10T02:07:49.797043680Z"
+}
