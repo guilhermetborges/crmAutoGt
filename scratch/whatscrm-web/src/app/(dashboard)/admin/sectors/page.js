@@ -1,10 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import Modal from '@/components/Modal';
 
 export default function SectorsPage() {
     const [sectors, setSectors] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [formData, setFormData] = useState({ name: '', description: '', color: '#1f93ff' });
 
     useEffect(() => {
         fetchSectors();
@@ -21,6 +24,18 @@ export default function SectorsPage() {
         }
     };
 
+    const handleSave = async (e) => {
+        e.preventDefault();
+        try {
+            await api.post('/api/v1/sectors', formData);
+            setIsModalOpen(false);
+            fetchSectors();
+            setFormData({ name: '', description: '', color: '#1f93ff' });
+        } catch (err) {
+            alert('Erro ao salvar setor: ' + (err.response?.data?.message || err.message));
+        }
+    };
+
     return (
         <div className="admin-page animate-fade-in">
             <style jsx>{`
@@ -34,12 +49,34 @@ export default function SectorsPage() {
         .sector-name { font-weight: 700; font-size: 18px; margin-bottom: 8px; display: block; }
         .sector-desc { color: var(--text-muted); font-size: 14px; margin-bottom: 16px; display: block; }
         .stats { display: flex; gap: 16px; font-size: 12px; color: var(--text-muted); }
+        .f-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 14px; }
+        input, textarea { width: 100%; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; color: white; }
+        .btn-save { width: 100%; padding: 14px; background: var(--primary); color: white; border-radius: 12px; font-weight: 600; margin-top: 12px; }
       `}</style>
 
             <div className="header">
                 <h1 className="title">Setores</h1>
-                <button className="btn-add">+ Novo Setor</button>
+                <button className="btn-add" onClick={() => setIsModalOpen(true)}>+ Novo Setor</button>
             </div>
+
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Novo Setor">
+                <form onSubmit={handleSave}>
+                    <div className="f-group">
+                        <label>Nome</label>
+                        <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                    </div>
+                    <div className="f-group">
+                        <label>Descrição</label>
+                        <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+                    </div>
+                    <div className="f-group">
+                        <label>Cor</label>
+                        <input type="color" value={formData.color} onChange={e => setFormData({ ...formData, color: e.target.value })} style={{ height: '50px' }} />
+                    </div>
+                    <button type="submit" className="btn-save">Salvar</button>
+                </form>
+            </Modal>
 
             {loading ? (
                 <div>Carregando...</div>

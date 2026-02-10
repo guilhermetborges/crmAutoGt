@@ -1,10 +1,13 @@
 'use client';
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import Modal from '@/components/Modal';
 
 export default function ChannelsPage() {
     const [channels, setChannels] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [formData, setFormData] = useState({ phoneNumber: '', phoneNumberId: '', wabaId: '', businessName: '', accessToken: '' });
 
     useEffect(() => {
         fetchChannels();
@@ -21,6 +24,18 @@ export default function ChannelsPage() {
         }
     };
 
+    const handleSave = async (e) => {
+        e.preventDefault();
+        try {
+            await api.post('/api/v1/channels', formData);
+            setIsModalOpen(false);
+            fetchChannels();
+            setFormData({ phoneNumber: '', phoneNumberId: '', wabaId: '', businessName: '', accessToken: '' });
+        } catch (err) {
+            alert('Erro ao salvar canal: ' + (err.response?.data?.message || err.message));
+        }
+    };
+
     return (
         <div className="admin-page animate-fade-in">
             <style jsx>{`
@@ -34,12 +49,42 @@ export default function ChannelsPage() {
         .info { flex: 1; }
         .wa-name { font-weight: 700; font-size: 16px; }
         .wa-number { color: var(--text-muted); font-size: 14px; }
+        .f-group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 4px; font-size: 12px; color: var(--text-muted); }
+        input { width: 100%; padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: white; }
+        .btn-save { width: 100%; padding: 12px; background: var(--primary); color: white; border-radius: 8px; font-weight: 600; margin-top: 12px; }
       `}</style>
 
             <div className="header">
                 <h1 className="title">Canais WhatsApp</h1>
-                <button className="btn-add">+ Conectar Número</button>
+                <button className="btn-add" onClick={() => setIsModalOpen(true)}>+ Conectar Número</button>
             </div>
+
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Novo Canal WhatsApp">
+                <form onSubmit={handleSave}>
+                    <div className="f-group">
+                        <label>Nome do Negócio</label>
+                        <input required value={formData.businessName} onChange={e => setFormData({ ...formData, businessName: e.target.value })} />
+                    </div>
+                    <div className="f-group">
+                        <label>Número do WhatsApp (+55...)</label>
+                        <input required value={formData.phoneNumber} onChange={e => setFormData({ ...formData, phoneNumber: e.target.value })} />
+                    </div>
+                    <div className="f-group">
+                        <label>Phone Number ID (Meta API)</label>
+                        <input required value={formData.phoneNumberId} onChange={e => setFormData({ ...formData, phoneNumberId: e.target.value })} />
+                    </div>
+                    <div className="f-group">
+                        <label>WABA ID (Meta API)</label>
+                        <input required value={formData.wabaId} onChange={e => setFormData({ ...formData, wabaId: e.target.value })} />
+                    </div>
+                    <div className="f-group">
+                        <label>Access Token (Permanent)</label>
+                        <input type="password" required value={formData.accessToken} onChange={e => setFormData({ ...formData, accessToken: e.target.value })} />
+                    </div>
+                    <button type="submit" className="btn-save">Salvar Canal</button>
+                </form>
+            </Modal>
 
             {loading ? (
                 <div>Carregando...</div>

@@ -9,10 +9,13 @@ export default function InboxPage() {
     const [conversations, setConversations] = useState([]);
     const [activeConversation, setActiveConversation] = useState(null);
     const [messages, setMessages] = useState([]);
+    const [quickReplies, setQuickReplies] = useState([]);
+    const [templates, setTemplates] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchConversations();
+        fetchTools();
     }, []);
 
     useEffect(() => {
@@ -98,6 +101,8 @@ export default function InboxPage() {
                         conversation={activeConversation}
                         messages={messages}
                         onSendMessage={handleSendMessage}
+                        quickReplies={quickReplies}
+                        templates={templates}
                     />
                     <ContactInfo
                         contact={activeConversation?.contact}

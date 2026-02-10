@@ -1,125 +1,122 @@
 'use client';
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import Modal from '@/components/Modal';
 
 export default function UsersPage() {
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'atendente' });
 
-    useEffect(() => {
-        fetchUsers();
-    }, []);
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
-    const fetchUsers = async () => {
-        try {
-            const { data } = await api.get('/api/v1/users');
-            setUsers(data.data || []);
-        } catch (err) {
-            console.error('Error fetching users:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
+  const fetchUsers = async () => {
+    try {
+      const { data } = await api.get('/api/v1/users');
+      setUsers(data.data || []);
+    } catch (err) {
+      console.error('Error fetching users:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div className="admin-page animate-fade-in">
-            <style jsx>{`
-        .admin-page {
-          padding: 40px;
-        }
-        .header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 32px;
-        }
-        .title {
-          font-size: 24px;
-          font-weight: 700;
-        }
-        .btn-add {
-          background: var(--primary);
-          color: white;
-          padding: 10px 20px;
-          border-radius: 10px;
-          font-weight: 600;
-        }
-        .table-container {
-          background: var(--surface);
-          border-radius: 16px;
-          border: 1px solid var(--border);
-          overflow: hidden;
-        }
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          text-align: left;
-        }
-        th {
-          padding: 16px 24px;
-          background: rgba(255, 255, 255, 0.02);
-          color: var(--text-muted);
-          font-size: 13px;
-          font-weight: 600;
-          text-transform: uppercase;
-          border-bottom: 1px solid var(--border);
-        }
-        td {
-          padding: 16px 24px;
-          border-bottom: 1px solid var(--border);
-          font-size: 14px;
-        }
-        .role-badge {
-          padding: 4px 8px;
-          border-radius: 6px;
-          font-size: 11px;
-          font-weight: 600;
-          background: rgba(31, 147, 255, 0.1);
-          color: var(--primary);
-        }
-        .status-active {
-          color: var(--success);
-        }
-        .status-inactive {
-          color: var(--error);
-        }
+  const handleSave = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post('/api/v1/users', formData);
+      setIsModalOpen(false);
+      fetchUsers();
+      setFormData({ name: '', email: '', password: '', role: 'atendente' });
+    } catch (err) {
+      alert('Erro ao salvar usuário: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  return (
+    <div className="admin-page animate-fade-in">
+      <style jsx>{`
+        .admin-page { padding: 40px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+        .title { font-size: 24px; font-weight: 700; }
+        .btn-add { background: var(--primary); color: white; padding: 10px 20px; border-radius: 10px; font-weight: 600; }
+        .table-container { background: var(--surface); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { padding: 16px 24px; background: rgba(255, 255, 255, 0.02); color: var(--text-muted); font-size: 13px; font-weight: 600; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+        td { padding: 16px 24px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .role-badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; background: rgba(31, 147, 255, 0.1); color: var(--primary); }
+        .status-active { color: var(--success); }
+        .status-inactive { color: var(--error); }
+        .f-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 14px; }
+        input, select { width: 100%; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; color: white; }
+        .btn-save { width: 100%; padding: 14px; background: var(--primary); color: white; border-radius: 12px; font-weight: 600; margin-top: 12px; }
       `}</style>
 
-            <div className="header">
-                <h1 className="title">Usuários</h1>
-                <button className="btn-add">+ Novo Usuário</button>
-            </div>
+      <div className="header">
+        <h1 className="title">Usuários</h1>
+        <button className="btn-add" onClick={() => setIsModalOpen(true)}>+ Novo Usuário</button>
+      </div>
 
-            <div className="table-container">
-                {loading ? (
-                    <div style={{ padding: '40px', textAlign: 'center' }}>Carregando...</div>
-                ) : (
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Nome</th>
-                                <th>E-mail</th>
-                                <th>Cargo</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {users.map(user => (
-                                <tr key={user.id}>
-                                    <td>{user.name}</td>
-                                    <td>{user.email}</td>
-                                    <td><span className="role-badge">{user.role}</span></td>
-                                    <td>
-                                        <span className={user.active ? 'status-active' : 'status-inactive'}>
-                                            ● {user.active ? 'Ativo' : 'Inativo'}
-                                        </span>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                )}
-            </div>
-        </div>
-    );
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Novo Usuário">
+        <form onSubmit={handleSave}>
+          <div className="f-group">
+            <label>Nome</label>
+            <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+          </div>
+          <div className="f-group">
+            <label>E-mail</label>
+            <input type="email" required value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+          </div>
+          <div className="f-group">
+            <label>Senha</label>
+            <input type="password" required value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
+          </div>
+          <div className="f-group">
+            <label>Cargo</label>
+            <select value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })}>
+              <option value="admin">Admin</option>
+              <option value="supervisor">Supervisor</option>
+              <option value="atendente">Atendente</option>
+            </select>
+          </div>
+          <button type="submit" className="btn-save">Salvar</button>
+        </form>
+      </Modal>
+
+      <div className="table-container">
+        {loading ? (
+          <div style={{ padding: '40px', textAlign: 'center' }}>Carregando...</div>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Cargo</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map(user => (
+                <tr key={user.id}>
+                  <td>{user.name}</td>
+                  <td>{user.email}</td>
+                  <td><span className="role-badge">{user.role}</span></td>
+                  <td>
+                    <span className={user.active ? 'status-active' : 'status-inactive'}>
+                      ● {user.active ? 'Ativo' : 'Inativo'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
 }

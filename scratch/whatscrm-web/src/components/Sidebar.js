@@ -3,21 +3,24 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 export default function Sidebar() {
-    const pathname = usePathname();
+  const pathname = usePathname();
 
-    const menuItems = [
-        { name: 'Inbox', path: '/inbox', icon: '💬' },
-        { name: 'Contatos', path: '/contacts', icon: '👤' },
-        { name: 'Usuários', path: '/admin/users', icon: '👥' },
-        { name: 'Setores', path: '/admin/sectors', icon: '🏢' },
-        { name: 'Canais', path: '/admin/channels', icon: '📱' },
-        { name: 'Tags', path: '/admin/tags', icon: '🏷️' },
-        { name: 'Relatórios', path: '/reports', icon: '📈' },
-    ];
+  const menuItems = [
+    { name: 'Inbox', path: '/inbox', icon: '💬' },
+    { name: 'Contatos', path: '/contacts', icon: '👤' },
+    { name: 'Usuários', path: '/admin/users', icon: '👥' },
+    { name: 'Setores', path: '/admin/sectors', icon: '🏢' },
+    { name: 'Canais', path: '/admin/channels', icon: '📱' },
+    { name: 'Tags', path: '/admin/tags', icon: '🏷️' },
+    { name: 'Respostas Rápidas', path: '/admin/quick-replies', icon: '⚡' },
+    { name: 'Templates', path: '/admin/templates', icon: '📋' },
+    { name: 'Auditoria', path: '/admin/audit-logs', icon: '📜' },
+    { name: 'Relatórios', path: '/reports', icon: '📈' },
+  ];
 
-    return (
-        <div className="sidebar animate-fade-in">
-            <style jsx>{`
+  return (
+    <div className="sidebar animate-fade-in">
+      <style jsx>{`
         .sidebar {
           width: var(--sidebar-width);
           height: 100vh;
@@ -94,27 +97,27 @@ export default function Sidebar() {
         }
       `}</style>
 
-            <div className="logo">WhatsCRM</div>
+      <div className="logo">WhatsCRM</div>
 
-            <nav className="nav">
-                {menuItems.map((item) => (
-                    <Link
-                        key={item.path}
-                        href={item.path}
-                        className={`nav-item ${pathname === item.path ? 'active' : ''}`}
-                    >
-                        <span className="icon">{item.icon}</span>
-                        {item.name}
-                    </Link>
-                ))}
-            </nav>
+      <nav className="nav">
+        {menuItems.map((item) => (
+          <Link
+            key={item.path}
+            href={item.path}
+            className={`nav-item ${pathname === item.path ? 'active' : ''}`}
+          >
+            <span className="icon">{item.icon}</span>
+            {item.name}
+          </Link>
+        ))}
+      </nav>
 
-            <div className="user-section">
-                <div className="avatar">AD</div>
-                <div className="user-info">
-                    <span className="user-name">Administrador</span>
-                </div>
-            </div>
+      <div className="user-section">
+        <div className="avatar">AD</div>
+        <div className="user-info">
+          <span className="user-name">Administrador</span>
         </div>
-    );
+      </div>
+    </div>
+  );
 }
