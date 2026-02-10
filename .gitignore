@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+dist/
+.next/
+out/
+build/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project specific
+scratch/whatscrm/node_modules/
+scratch/whatscrm-web/node_modules/
+scratch/whatscrm/dist/
+scratch/whatscrm-web/.next/

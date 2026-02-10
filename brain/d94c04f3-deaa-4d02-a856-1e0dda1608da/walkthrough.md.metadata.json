@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_WALKTHROUGH",
+  "summary": "Walkthrough of the WhatsCRM Frontend implementation. Covers design system, login, inbox with real-time chat components, admin panels for users/sectors/channels/tags, and the reports dashboard. All pages are built with Next.js 14 and glassmorphism design.",
+  "updatedAt": "2026-02-10T02:31:03.719597798Z"
+}
