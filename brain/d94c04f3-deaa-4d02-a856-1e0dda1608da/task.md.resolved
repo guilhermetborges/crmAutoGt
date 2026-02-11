@@ -25,9 +25,13 @@
 
 ## Administração (somente ADMIN)
 - [x] Tela de Usuários (CRUD)
-- [x] Tela de Setores (CRUD + atribuir usuários)
+- [x] Modais de Criação/Edição (Usuários, Setores, Canais, Tags)
+- [x] Tela de Setores (CRUD)
 - [x] Tela de Canais WhatsApp (CRUD)
 - [x] Tela de Tags (CRUD)
+- [x] Tela de Respostas Rápidas (CRUD)
+- [x] Tela de Templates (CRUD)
+- [x] Tela de Logs de Auditoria
 
 ## Relatórios
 - [x] Dashboard Overview (cards + gráficos)
@@ -36,5 +40,5 @@
 - [x] Integração WebSocket (Socket.IO client + eventos)
 
 ## Verificação
-- [ ] Build sem erros
+- [x] Build sem erros
 - [x] Testar todas as páginas no browser

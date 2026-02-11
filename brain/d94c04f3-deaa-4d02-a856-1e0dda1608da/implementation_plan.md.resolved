@@ -27,12 +27,15 @@ whatscrm-web/
 │   │   ├── (dashboard)/        # Layout group (sidebar + header)
 │   │   │   ├── layout.js       # Dashboard layout com sidebar
 │   │   │   ├── inbox/page.js   # Inbox principal (conversas + chat)
-│   │   │   ├── contacts/page.js
+│   │   │   ├── contacts/page.js# Lista de contatos
 │   │   │   ├── admin/
 │   │   │   │   ├── users/page.js
 │   │   │   │   ├── sectors/page.js
 │   │   │   │   ├── channels/page.js
-│   │   │   │   └── tags/page.js
+│   │   │   │   ├── tags/page.js
+│   │   │   │   ├── quick-replies/page.js # [NEW]
+│   │   │   │   ├── templates/page.js     # [NEW]
+│   │   │   │   └── audit-logs/page.js     # [NEW]
 │   │   │   └── reports/page.js
 │   │   └── globals.css         # Design system + all styles
 │   ├── lib/
@@ -68,20 +71,18 @@ whatscrm-web/
 - Listagem de contatos com busca
 - Detalhe com histórico de conversas
 
-#### Admin — Usuários (`/admin/users`)
-- Tabela com CRUD, filtros por role
-- Modal de criação/edição
+#### Admin — Usuários/Setores/Canais/Tags
+- CRUD completo com modais de criação e edição.
+- Validação de formulários.
 
-#### Admin — Setores (`/admin/sectors`)
-- Tabela com CRUD
-- Gerenciamento de membros
+#### Admin — Respostas Rápidas (`/admin/quick-replies`)
+- Gestão de atalhos (ex: `/ola`) para facilitar o atendimento.
 
-#### Admin — Canais (`/admin/channels`)
-- Tabela de canais WhatsApp
-- Modal de criação
+#### Admin — Templates (`/admin/templates`)
+- Gestão de mensagens padronizadas (HSM para WhatsApp).
 
-#### Admin — Tags (`/admin/tags`)
-- Tabela com CRUD + color picker
+#### Admin — Audit Logs (`/admin/audit-logs`)
+- Visualização das ações realizadas no sistema para segurança e conformidade.
 
 #### Reports (`/reports`)
 - Cards de métricas (total conversas, tempo médio resposta, SLA)

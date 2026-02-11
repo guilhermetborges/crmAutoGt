@@ -24,6 +24,19 @@ export default function InboxPage() {
         }
     }, [activeConversation]);
 
+    const fetchTools = async () => {
+        try {
+            const [qr, tp] = await Promise.all([
+                api.get('/api/v1/quick-replies'),
+                api.get('/api/v1/templates')
+            ]);
+            setQuickReplies(qr.data.data || []);
+            setTemplates(tp.data.data || []);
+        } catch (err) {
+            console.error('Error fetching tools:', err);
+        }
+    };
+
     const fetchConversations = async () => {
         try {
             const { data } = await api.get('/api/v1/conversations');
